@@ -1,0 +1,41 @@
+@layer components {
+	button {
+		@apply focus:shadow-none;
+	}
+
+	.btn {
+		@apply inline-flex
+			h-8
+			flex-shrink-0
+			cursor-pointer
+			items-center
+			rounded
+			px-3
+			transition-colors
+			duration-200
+			focus:shadow-none;
+
+		& > .icon {
+			@apply -ml-[2px];
+		}
+
+		&.icon {
+			@apply h-8
+            w-8
+            justify-center
+            px-0;
+		}
+	}
+
+	.btn-close {
+		--close-bg: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2337507f'><path d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/></svg>");
+
+		@apply h-6
+			w-6
+			rounded-full
+			bg-[image:var(--close-bg)]
+			bg-[length:9px_9px]
+			bg-center
+			bg-no-repeat;
+	}
+}

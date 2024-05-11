@@ -1,0 +1,31 @@
+:root {
+	// Theme colors
+	--theme-color: 17 130 238;
+	--theme-light-100: 240 247 252;
+	--theme-light-200: 229 239 248;
+	--theme-light-300: 217 231 243;
+	--theme-light-400: 206 223 238;
+	--theme-light-500: 196 215 233;
+
+	--theme-dark-100: 41 60 72;
+	--theme-dark-200: 49 72 87;
+	--theme-dark-300: 60 86 103;
+	--theme-dark-400: 86 117 138;
+	--theme-dark-500: 104 138 160;
+
+	// Body
+	--body-bg: 247 250 254;
+	--body-color: #37507f;
+
+	// Sidebar
+	--sidebar-width: 15rem;
+	--sidebar-min-width: 3.875rem;
+
+	// Tooltip
+	--tooltip-bg: #1f2e36;
+	--tooltip-color: #e0f3ff;
+
+	// Text
+	--text-heading: #23416f;
+	--text-muted: #627da7;
+}

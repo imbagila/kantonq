@@ -1,0 +1,21 @@
+// Form control
+@mixin form-control() {
+	@apply h-9
+		w-full
+		rounded
+		border
+		border-light-300
+		bg-transparent
+		px-3
+		shadow-none;
+}
+
+@mixin form-control-focus() {
+	@apply border-light-500
+		shadow-none;
+}
+
+@mixin form-control-disable() {
+	@apply bg-light-100
+		text-muted opacity-70;
+}
