@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tokio_pg_mapper_derive::PostgresMapper;
 
@@ -5,7 +6,7 @@ use tokio_pg_mapper_derive::PostgresMapper;
 #[pg_mapper(table = "transactions")]
 pub struct Transaction {
     pub id: String,
-    pub datetime: String,
+    pub datetime: DateTime<Utc>,
     pub trx_type: String,
     pub trx_subtype: String,
     pub wallet_from: Option<String>,
