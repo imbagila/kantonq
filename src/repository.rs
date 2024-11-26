@@ -37,6 +37,7 @@ pub async fn add_transaction(
     let _stmt = r#"
         INSERT INTO transactions(
             id,
+            datetime,
             trx_type,
             trx_subtype,
             wallet_from,
@@ -46,7 +47,7 @@ pub async fn add_transaction(
             fee,
             description
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING
             id,
             datetime,
@@ -66,6 +67,7 @@ pub async fn add_transaction(
             &stmt,
             &[
                 &transaction.id,
+                &transaction.datetime,
                 &transaction.trx_type,
                 &transaction.trx_subtype,
                 &transaction.wallet_from,
