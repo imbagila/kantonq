@@ -15,7 +15,7 @@ import ModeToggle from "$lib/components/mode-toggle.svelte";
   };
   const isDark = getThemePreference() === 'dark';
   document.documentElement.classList[isDark ? 'add' : 'remove']('dark');
- 
+
   if (isBrowser) {
     const observer = new MutationObserver(() => {
       const isDark = document.documentElement.classList.contains('dark');

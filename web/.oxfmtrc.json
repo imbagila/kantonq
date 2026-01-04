@@ -1,0 +1,14 @@
+{
+    "$schema": "https://oxc.rs/json-schemas/oxfmt/v0.json",
+    "printWidth": 80,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "quotestyle": "double",
+    "jsxQuoteStyle": "double",
+    "semicolons": "always",
+    "trailingCommas": "all",
+    "bracketSpacing": true,
+    "bracketSameLine": false,
+    "arrowParens": "always"
+}

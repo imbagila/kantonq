@@ -22,6 +22,7 @@
   "devDependencies": {
     "@lucide/svelte": "^0.562.0",
     "clsx": "^2.1.1",
+    "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",
     "tailwind-merge": "^3.4.0",
     "tailwind-variants": "^3.2.2",
