@@ -20,7 +20,10 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@lucide/svelte": "^0.562.0",
+    "@astrojs/check": "^0.9.6",
+    "@internationalized/date": "^3.10.0",
+    "@lucide/svelte": "^0.561.0",
+    "bits-ui": "^2.14.4",
     "clsx": "^2.1.1",
     "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",
