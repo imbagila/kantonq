@@ -1,0 +1,15 @@
+---
+const { title = "Kantonq", ...props } = Astro.props;
+---
+
+<link rel="sitemap" href="/sitemap-index.xml">
+<title>{title}</title>
+<meta name="description" content="Kantonq is your personal financial app.">
+
+<!-- Open Graph tags -->
+<meta property="og:title" content="Kantonq" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://kantonq.com/" />
+<meta property="og:description" content="Kantonq is your personal financial app." />
+<meta property="og:image" content="https://kantonq.com/seo-banner.webp" />
+<meta property="og:image:alt" content="Kantonq is your personal financial app." />
