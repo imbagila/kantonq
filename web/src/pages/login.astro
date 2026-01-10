@@ -1,12 +1,6 @@
 ---
 import '../styles/global.css';
-import LoginForm from "$lib/components/login-form.svelte";
-import GalleryVerticalEndIconRaw from "@lucide/svelte/icons/gallery-vertical-end";
-import type { SVGAttributes } from "svelte/elements";
-
-// Astro's TS checker doesn't currently infer props from Svelte 5 `Component<...>` types,
-// so we type-cast Lucide's Svelte component to a JSX-compatible function signature.
-const GalleryVerticalEndIcon = GalleryVerticalEndIconRaw as unknown as (props: SVGAttributes<SVGSVGElement>) => any;
+import LoginLayout from "$lib/components/login-03/+page.svelte";
 ---
 
 <html lang="en">
@@ -18,18 +12,6 @@ const GalleryVerticalEndIcon = GalleryVerticalEndIconRaw as unknown as (props: S
         <title>Kantonq</title>
     </head>
     <body>
-        <div class="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
-            <div class="flex w-full max-w-sm flex-col gap-6">
-                <a href="##" class="flex items-center gap-2 self-center font-medium">
-                    <div
-                        class="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md"
-                    >
-                        <GalleryVerticalEndIcon class="size-4" />
-                    </div>
-                    Kantonq
-                </a>
-                <LoginForm />
-            </div>
-        </div>
+        <LoginLayout client:load />
     </body>
 </html>
