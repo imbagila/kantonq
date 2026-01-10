@@ -45,5 +45,9 @@
                 }
             }
         }
-    }
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "TypeScriptTeam.native-preview"
+    },
+    "oxc.enable": false
 }
