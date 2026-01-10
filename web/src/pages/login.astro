@@ -1,17 +1,8 @@
 ---
-import '../styles/global.css';
+import Layout from '../components/Layout.astro';
 import LoginLayout from "$lib/components/login-03/+page.svelte";
 ---
 
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <meta name="viewport" content="width=device-width" />
-        <meta name="generator" content={Astro.generator} />
-        <title>Kantonq</title>
-    </head>
-    <body>
-        <LoginLayout client:load />
-    </body>
-</html>
+<Layout title="Login - Kantonq">
+    <LoginLayout client:load />
+</Layout>

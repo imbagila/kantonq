@@ -1,0 +1,53 @@
+---
+import '../styles/global.css';
+import Head from './Head.astro';
+import { ModeWatcher } from "mode-watcher";
+import ModeToggle from "$lib/components/mode-toggle.svelte";
+
+interface Props {
+    title?: string;
+}
+
+const { title = "Kantonq" } = Astro.props;
+---
+
+<script is:inline>
+    const isBrowser = typeof localStorage !== 'undefined';
+    const getThemePreference = () => {
+        if (isBrowser && localStorage.getItem('theme')) {
+            return localStorage.getItem('theme');
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark' : 'light';
+    };
+    const isDark = getThemePreference() === 'dark';
+    document.documentElement.classList[isDark ? 'add' : 'remove']('dark');
+
+    if (isBrowser) {
+        const observer = new MutationObserver(() => {
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+</script>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="viewport" content="width=device-width" />
+        <meta name="generator" content={Astro.generator} />
+        <Head title={title} />
+    </head>
+    <body>
+        <ModeWatcher client:load />
+        <div class="fixed top-4 right-4 z-50">
+            <ModeToggle client:load />
+        </div>
+        <slot />
+    </body>
+</html>
