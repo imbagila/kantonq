@@ -4,6 +4,7 @@
     },
     "oxc.fmt.experimental": true,
     "editor.defaultFormatter": "oxc.oxc-vscode",
+    "typescript.experimental.useTsgo": true,
     "languages": {
         "JavaScript": {
             "format_on_save": "on",
