@@ -4,17 +4,61 @@
 	import {
 		FieldGroup,
 		Field,
-		FieldLabel,
 		FieldDescription,
-		FieldSeparator,
 	} from "$lib/components/ui/field/index.js";
-	import { Input } from "$lib/components/ui/input/index.js";
 	import { cn } from "$lib/utils.js";
 	import type { HTMLAttributes } from "svelte/elements";
+	import { onMount } from "svelte";
+	import { auth, isLoading, authError, isAuthenticated } from "$lib/stores/auth";
+	import { initGoogleOAuth, loginWithGoogle } from "$lib/services/google-oauth";
+	import LoaderCircle from "@lucide/svelte/icons/loader-circle";
 
 	let { class: className, ...restProps }: HTMLAttributes<HTMLDivElement> = $props();
 
-	const id = $props.id();
+	// Get Google Client ID from environment or config
+	// This should be set in your .env file as PUBLIC_GOOGLE_CLIENT_ID
+	const GOOGLE_CLIENT_ID = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID || '';
+
+	let initError = $state<string | null>(null);
+	let isInitialized = $state(false);
+
+	onMount(() => {
+		// Initialize auth state from localStorage
+		auth.init();
+
+		// If already authenticated, redirect to dashboard
+		const unsubscribe = isAuthenticated.subscribe((authenticated) => {
+			if (authenticated) {
+				window.location.href = '/dashboard';
+			}
+		});
+
+		// Initialize Google OAuth
+		if (GOOGLE_CLIENT_ID) {
+			initGoogleOAuth({ clientId: GOOGLE_CLIENT_ID })
+				.then(() => {
+					isInitialized = true;
+				})
+				.catch((error) => {
+					console.error('Failed to initialize Google OAuth:', error);
+					initError = 'Failed to initialize Google authentication';
+				});
+		} else {
+			initError = 'Google Client ID not configured';
+			console.error('PUBLIC_GOOGLE_CLIENT_ID environment variable is not set');
+		}
+
+		return () => {
+			unsubscribe();
+		};
+	});
+
+	function handleGoogleLogin() {
+		if (!isInitialized) {
+			return;
+		}
+		loginWithGoogle();
+	}
 </script>
 
 <div class={cn("flex flex-col gap-6", className)} {...restProps}>
@@ -24,30 +68,51 @@
 			<Card.Description>Login with your Google account</Card.Description>
 		</Card.Header>
 		<Card.Content>
-			<form>
-				<FieldGroup>
-					<Field>
-						<Button variant="outline" type="button">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+			<FieldGroup>
+				<Field>
+					{#if initError}
+						<div class="bg-destructive/10 text-destructive rounded-md p-3 text-sm mb-4">
+							{initError}
+						</div>
+					{/if}
+
+					{#if $authError}
+						<div class="bg-destructive/10 text-destructive rounded-md p-3 text-sm mb-4">
+							{$authError}
+						</div>
+					{/if}
+
+					<Button
+						variant="outline"
+						type="button"
+						class="w-full"
+						onclick={handleGoogleLogin}
+						disabled={!isInitialized || $isLoading}
+					>
+						{#if $isLoading}
+							<LoaderCircle class="size-4 animate-spin mr-2" />
+							Signing in...
+						{:else}
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-4 mr-2">
 								<path
 									d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
 									fill="currentColor"
 								/>
 							</svg>
 							Login with Google
-						</Button>
-					</Field>
-					<Field>
-						<FieldDescription class="text-center">
-							Don't have an account? Please contact <a href="mailto:me@imbagila.com">administrator</a>.
-						</FieldDescription>
-					</Field>
-				</FieldGroup>
-			</form>
+						{/if}
+					</Button>
+				</Field>
+				<Field>
+					<FieldDescription class="text-center">
+						Don't have an account? Please contact <a href="mailto:me@imbagila.com" class="text-primary hover:underline">administrator</a>.
+					</FieldDescription>
+				</Field>
+			</FieldGroup>
 		</Card.Content>
 	</Card.Root>
 	<FieldDescription class="px-6 text-center">
-		By clicking continue, you agree to our <a href="##">Terms of Service</a>
-		and <a href="##">Privacy Policy</a>.
+		By clicking continue, you agree to our <a href="/terms" class="text-primary hover:underline">Terms of Service</a>
+		and <a href="/privacy" class="text-primary hover:underline">Privacy Policy</a>.
 	</FieldDescription>
 </div>

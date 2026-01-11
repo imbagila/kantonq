@@ -9,8 +9,23 @@
 	import CreditCardIcon from "@lucide/svelte/icons/credit-card";
 	import LogOutIcon from "@lucide/svelte/icons/log-out";
 	import SparklesIcon from "@lucide/svelte/icons/sparkles";
+	import { auth, user as authUser } from "$lib/stores/auth";
+	import { logoutFromGoogle } from "$lib/services/google-oauth";
 
-	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
+	// Fallback user data for when not authenticated (shouldn't happen in practice)
+	const defaultUser = {
+		name: "User",
+		email: "user@example.com",
+		avatar: "",
+	};
+
+	// Use authenticated user data or fallback
+	let displayUser = $derived({
+		name: $authUser?.name ?? defaultUser.name,
+		email: $authUser?.email ?? defaultUser.email,
+		avatar: $authUser?.picture ?? defaultUser.avatar,
+	});
+
 	const sidebar = useSidebar();
 
 	// Generate initials from user name for avatar fallback
@@ -22,6 +37,11 @@
 			.toUpperCase()
 			.slice(0, 2);
 	};
+
+	function handleLogout() {
+		logoutFromGoogle();
+		window.location.href = "/login";
+	}
 </script>
 
 <Sidebar.Menu>
@@ -35,14 +55,14 @@
 						{...props}
 					>
 						<Avatar.Root class="size-8 rounded-lg">
-							{#if user.avatar}
-								<Avatar.Image src={user.avatar} alt={user.name} />
+							{#if displayUser.avatar}
+								<Avatar.Image src={displayUser.avatar} alt={displayUser.name} referrerpolicy="no-referrer" />
 							{/if}
-							<Avatar.Fallback class="rounded-lg">{getInitials(user.name)}</Avatar.Fallback>
+							<Avatar.Fallback class="rounded-lg">{getInitials(displayUser.name)}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-start text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-medium">{displayUser.name}</span>
+							<span class="truncate text-xs">{displayUser.email}</span>
 						</div>
 						<ChevronsUpDownIcon class="ms-auto size-4" />
 					</Sidebar.MenuButton>
@@ -57,14 +77,14 @@
 				<DropdownMenu.Label class="p-0 font-normal">
 					<div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
 						<Avatar.Root class="size-8 rounded-lg">
-							{#if user.avatar}
-								<Avatar.Image src={user.avatar} alt={user.name} />
+							{#if displayUser.avatar}
+								<Avatar.Image src={displayUser.avatar} alt={displayUser.name} referrerpolicy="no-referrer" />
 							{/if}
-							<Avatar.Fallback class="rounded-lg">{getInitials(user.name)}</Avatar.Fallback>
+							<Avatar.Fallback class="rounded-lg">{getInitials(displayUser.name)}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-start text-sm leading-tight">
-							<span class="truncate font-medium">{user.name}</span>
-							<span class="truncate text-xs">{user.email}</span>
+							<span class="truncate font-medium">{displayUser.name}</span>
+							<span class="truncate text-xs">{displayUser.email}</span>
 						</div>
 					</div>
 				</DropdownMenu.Label>
@@ -91,7 +111,7 @@
 					</DropdownMenu.Item>
 				</DropdownMenu.Group>
 				<DropdownMenu.Separator />
-				<DropdownMenu.Item>
+				<DropdownMenu.Item onclick={handleLogout}>
 					<LogOutIcon />
 					Log out
 				</DropdownMenu.Item>

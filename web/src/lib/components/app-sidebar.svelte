@@ -10,13 +10,8 @@
 	import Settings2Icon from "@lucide/svelte/icons/settings-2";
 	import SquareTerminalIcon from "@lucide/svelte/icons/square-terminal";
 
-	// This is sample data.
+	// This is sample data for navigation.
 	const data = {
-		user: {
-			name: "shadcn",
-			email: "m@example.com",
-			avatar: "", // Using fallback initials instead of missing image
-		},
 		teams: [
 			{
 				name: "Acme Inc",
@@ -165,7 +160,7 @@
 		<NavProjects projects={data.projects} />
 	</Sidebar.Content>
 	<Sidebar.Footer>
-		<NavUser user={data.user} />
+		<NavUser />
 	</Sidebar.Footer>
 	<Sidebar.Rail />
 </Sidebar.Root>

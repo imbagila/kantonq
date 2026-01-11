@@ -1,8 +1,13 @@
 ---
 import Layout from '../components/Layout.astro';
+import AuthGuard from "$lib/components/auth-guard.svelte";
 import DashboardLayout from "$lib/components/sidebar-07/+page.svelte";
 ---
 
 <Layout title="Dashboard - Kantonq">
-    <DashboardLayout client:visible />
+    <AuthGuard client:load>
+        {#snippet children()}
+            <DashboardLayout />
+        {/snippet}
+    </AuthGuard>
 </Layout>

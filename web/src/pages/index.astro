@@ -1,7 +1,8 @@
 ---
 import Layout from '../components/Layout.astro';
+import AuthRedirect from "$lib/components/auth-redirect.svelte";
 ---
 
 <Layout title="Kantonq">
-    <h1>Astro</h1>
+    <AuthRedirect client:load />
 </Layout>
