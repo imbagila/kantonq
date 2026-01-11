@@ -4,15 +4,17 @@
 	 * Protects routes by checking authentication status
 	 * Redirects to login page if not authenticated
 	 */
+	import type { Snippet } from "svelte";
 	import { onMount } from "svelte";
 	import { auth, isAuthenticated, isLoading } from "$lib/stores/auth";
 	import LoaderCircle from "@lucide/svelte/icons/loader-circle";
 
 	interface Props {
 		redirectTo?: string;
+		children?: Snippet;
 	}
 
-	let { redirectTo = "/login" }: Props = $props();
+	let { redirectTo = "/login", children }: Props = $props();
 
 	let mounted = $state(false);
 
@@ -40,7 +42,7 @@
 	</div>
 {:else if $isAuthenticated}
 	<!-- Render protected content -->
-	<slot />
+	{@render children?.()}
 {:else}
 	<!-- Redirecting state -->
 	<div class="flex min-h-svh items-center justify-center bg-background">

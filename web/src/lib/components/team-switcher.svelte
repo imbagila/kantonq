@@ -10,7 +10,8 @@
 	let { teams }: { teams: { name: string; logo: any; plan: string }[] } = $props();
 	const sidebar = useSidebar();
 
-	let activeTeam = $state(teams[0]);
+	let selectedIndex = $state(0);
+	let activeTeam = $derived(teams[selectedIndex] ?? teams[0]);
 </script>
 
 <Sidebar.Menu>
@@ -46,7 +47,7 @@
 			>
 				<DropdownMenu.Label class="text-muted-foreground text-xs">Teams</DropdownMenu.Label>
 				{#each teams as team, index (team.name)}
-					<DropdownMenu.Item onSelect={() => (activeTeam = team)} class="gap-2 p-2">
+					<DropdownMenu.Item onSelect={() => (selectedIndex = index)} class="gap-2 p-2">
 						<div class="flex size-6 items-center justify-center rounded-md border">
 							<team.logo class="size-3.5 shrink-0" />
 						</div>
