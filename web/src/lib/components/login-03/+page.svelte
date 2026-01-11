@@ -11,7 +11,7 @@
 			>
 				<GalleryVerticalEndIcon class="size-4" />
 			</div>
-			Acme Inc.
+			Kantonq
 		</a>
 		<LoginForm />
 	</div>
