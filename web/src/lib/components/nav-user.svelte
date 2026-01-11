@@ -12,6 +12,16 @@
 
 	let { user }: { user: { name: string; email: string; avatar: string } } = $props();
 	const sidebar = useSidebar();
+
+	// Generate initials from user name for avatar fallback
+	const getInitials = (name: string) => {
+		return name
+			.split(" ")
+			.map((part) => part[0])
+			.join("")
+			.toUpperCase()
+			.slice(0, 2);
+	};
 </script>
 
 <Sidebar.Menu>
@@ -25,8 +35,10 @@
 						{...props}
 					>
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							{#if user.avatar}
+								<Avatar.Image src={user.avatar} alt={user.name} />
+							{/if}
+							<Avatar.Fallback class="rounded-lg">{getInitials(user.name)}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-start text-sm leading-tight">
 							<span class="truncate font-medium">{user.name}</span>
@@ -45,8 +57,10 @@
 				<DropdownMenu.Label class="p-0 font-normal">
 					<div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
 						<Avatar.Root class="size-8 rounded-lg">
-							<Avatar.Image src={user.avatar} alt={user.name} />
-							<Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+							{#if user.avatar}
+								<Avatar.Image src={user.avatar} alt={user.name} />
+							{/if}
+							<Avatar.Fallback class="rounded-lg">{getInitials(user.name)}</Avatar.Fallback>
 						</Avatar.Root>
 						<div class="grid flex-1 text-start text-sm leading-tight">
 							<span class="truncate font-medium">{user.name}</span>

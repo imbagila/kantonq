@@ -41,12 +41,15 @@ const { title = "Kantonq" } = Astro.props;
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="viewport" content="width=device-width" />
         <meta name="generator" content={Astro.generator} />
+        <!-- Preconnect to improve resource loading -->
+        <link rel="preconnect" href="/" crossorigin />
+        <!-- Preload critical fonts if any -->
         <Head title={title} />
     </head>
     <body>
-        <ModeWatcher client:load />
+        <ModeWatcher client:idle />
         <div class="fixed top-4 right-4 z-50">
-            <ModeToggle client:load />
+            <ModeToggle client:idle />
         </div>
         <slot />
     </body>

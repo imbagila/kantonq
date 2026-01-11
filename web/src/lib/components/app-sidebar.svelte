@@ -15,7 +15,7 @@
 		user: {
 			name: "shadcn",
 			email: "m@example.com",
-			avatar: "/avatars/shadcn.jpg",
+			avatar: "", // Using fallback initials instead of missing image
 		},
 		teams: [
 			{

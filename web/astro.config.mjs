@@ -12,8 +12,28 @@ export default defineConfig({
   integrations: [svelte()],
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      // Optimize chunk size
+      chunkSizeWarningLimit: 500,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'svelte-runtime': ['svelte'],
+            'ui-icons': ['@lucide/svelte'],
+            'ui-components': ['bits-ui'],
+            'utils': ['clsx', 'tailwind-merge', 'tailwind-variants'],
+          }
+        }
+      }
+    },
+    // Optimize dependency pre-bundling
+    optimizeDeps: {
+      include: ['svelte', 'bits-ui', 'mode-watcher'],
+    }
   },
   devToolbar: {
     enabled: false,
   },
+  // Optimize output
+  compressHTML: true,
 });

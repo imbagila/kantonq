@@ -11,7 +11,7 @@
     "lint:fix": "bunx --bun oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "test:perf": "node tests/performance.test.js"
+    "test:perf": "bun tests/performance.test.js"
   },
   "dependencies": {
     "@astrojs/svelte": "^7.2.5",

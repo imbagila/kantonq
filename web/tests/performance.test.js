@@ -6,8 +6,9 @@
  * 2. Chrome DevTools Performance trace (CPU, memory, network timing)
  * 
  * Usage:
- *   bun run test:perf              # Run against default URL (http://localhost:4321)
- *   bun run test:perf --url=https://example.com  # Run against custom URL
+ *   bun run test:perf                           # Run all pages against localhost:4321
+ *   bun run test:perf --url=https://example.com # Run against custom base URL
+ *   bun run test:perf --page=/dashboard         # Run only specific page
  */
 
 import { chromium } from 'playwright';
@@ -22,7 +23,26 @@ const RESULTS_DIR = join(__dirname, '../performance-results');
 // Parse command line arguments
 const args = process.argv.slice(2);
 const urlArg = args.find(arg => arg.startsWith('--url='));
-const TARGET_URL = urlArg ? urlArg.split('=')[1] : 'http://localhost:4321';
+const pageArg = args.find(arg => arg.startsWith('--page='));
+const BASE_URL = urlArg ? urlArg.split('=')[1] : 'http://localhost:4321';
+
+// Pages to test - add new pages here
+const ALL_PAGES = [
+  { path: '/', name: 'index' },
+  { path: '/dashboard', name: 'dashboard' },
+  { path: '/login', name: 'login' },
+];
+
+// If specific page requested, filter to just that page
+const PAGES_TO_TEST = pageArg 
+  ? ALL_PAGES.filter(p => p.path === pageArg.split('=')[1])
+  : ALL_PAGES;
+
+if (PAGES_TO_TEST.length === 0) {
+  console.error(`❌ Page not found: ${pageArg?.split('=')[1]}`);
+  console.error(`Available pages: ${ALL_PAGES.map(p => p.path).join(', ')}`);
+  process.exit(1);
+}
 
 // Ensure results directory exists
 if (!existsSync(RESULTS_DIR)) {
@@ -51,8 +71,8 @@ function formatTime(ms) {
 /**
  * Run Chrome Lighthouse audit using Playwright's CDP connection
  */
-async function runLighthouse(browser, url) {
-  console.log('\n🔦 Running Lighthouse audit...\n');
+async function runLighthouse(browser, url, pageName = 'index') {
+  console.log(`\n🔦 Running Lighthouse audit for /${pageName}...\n`);
   
   // Get the CDP endpoint from Playwright browser
   const cdpEndpoint = browser.contexts()[0]?.pages()[0] 
@@ -81,12 +101,12 @@ async function runLighthouse(browser, url) {
 
     const { lhr, report } = result;
     
-    // Save HTML report
-    const htmlPath = join(RESULTS_DIR, 'lighthouse-report.html');
+    // Save HTML report (with page name suffix)
+    const htmlPath = join(RESULTS_DIR, `lighthouse-${pageName}.html`);
     writeFileSync(htmlPath, report[1]);
     
-    // Save JSON report
-    const jsonPath = join(RESULTS_DIR, 'lighthouse-report.json');
+    // Save JSON report (with page name suffix)
+    const jsonPath = join(RESULTS_DIR, `lighthouse-${pageName}.json`);
     writeFileSync(jsonPath, report[0]);
 
     // Extract and display key metrics
@@ -128,20 +148,24 @@ async function runLighthouse(browser, url) {
 
     console.log('└─────────────────────────────────────────────────────────────┘');
     console.log(`\n📄 Reports saved to: ${RESULTS_DIR}`);
-    console.log(`   - lighthouse-report.html`);
-    console.log(`   - lighthouse-report.json`);
+    console.log(`   - lighthouse-${pageName}.html`);
+    console.log(`   - lighthouse-${pageName}.json`);
 
     return lhr;
   } finally {
-    await lighthouseBrowser.close();
+    // Force close with timeout to prevent hanging
+    await Promise.race([
+      lighthouseBrowser.close(),
+      new Promise(resolve => setTimeout(resolve, 5000))
+    ]).catch(() => {});
   }
 }
 
 /**
  * Run Chrome DevTools Performance trace using Playwright
  */
-async function runDevToolsPerformance(browser, url) {
-  console.log('\n\n📊 Running Chrome DevTools Performance trace...\n');
+async function runDevToolsPerformance(browser, url, pageName = 'index') {
+  console.log(`\n\n📊 Running Chrome DevTools Performance trace for /${pageName}...\n`);
   
   const context = await browser.newContext({
     viewport: { width: 1920, height: 1080 },
@@ -189,7 +213,7 @@ async function runDevToolsPerformance(browser, url) {
 
   // Stop tracing and save
   const traceBuffer = await browser.stopTracing();
-  const tracePath = join(RESULTS_DIR, 'devtools-trace.json');
+  const tracePath = join(RESULTS_DIR, `devtools-trace-${pageName}.json`);
   writeFileSync(tracePath, traceBuffer);
 
   // Get performance metrics via CDP
@@ -293,12 +317,12 @@ async function runDevToolsPerformance(browser, url) {
     resources: resources.slice(0, 50),
   };
   
-  const metricsPath = join(RESULTS_DIR, 'devtools-metrics.json');
+  const metricsPath = join(RESULTS_DIR, `devtools-metrics-${pageName}.json`);
   writeFileSync(metricsPath, JSON.stringify(metricsData, null, 2));
   
-  console.log(`\n📄 DevTools reports saved:`);
-  console.log(`   - devtools-trace.json (Open in Chrome DevTools > Performance)`);
-  console.log(`   - devtools-metrics.json`);
+  console.log(`\n📄 DevTools reports saved for /${pageName}:`);
+  console.log(`   - devtools-trace-${pageName}.json (Open in Chrome DevTools > Performance)`);
+  console.log(`   - devtools-metrics-${pageName}.json`);
 
   await context.close();
   return metricsData;
@@ -312,10 +336,12 @@ async function runPerformanceTests() {
   console.log('       🔬 PERFORMANCE TEST SUITE - Lighthouse & DevTools');
   console.log('                     (Powered by Playwright)');
   console.log('═'.repeat(63));
-  console.log(`\n🎯 Target URL: ${TARGET_URL}`);
+  console.log(`\n🎯 Base URL: ${BASE_URL}`);
+  console.log(`📄 Pages to test: ${PAGES_TO_TEST.map(p => p.path).join(', ')}`);
   console.log(`📁 Results directory: ${RESULTS_DIR}\n`);
 
   let browser;
+  const allResults = [];
   
   try {
     // Launch browser with Playwright
@@ -330,27 +356,62 @@ async function runPerformanceTests() {
       ],
     });
 
-    // Run tests
-    const lighthouseResults = await runLighthouse(browser, TARGET_URL);
-    const devtoolsResults = await runDevToolsPerformance(browser, TARGET_URL);
+    // Run tests for each page
+    for (const page of PAGES_TO_TEST) {
+      const fullUrl = `${BASE_URL}${page.path}`;
+      console.log('\n' + '─'.repeat(63));
+      console.log(`  📄 Testing: ${page.path} (${page.name})`);
+      console.log('─'.repeat(63));
+      
+      const lighthouseResults = await runLighthouse(browser, fullUrl, page.name);
+      const devtoolsResults = await runDevToolsPerformance(browser, fullUrl, page.name);
+      
+      allResults.push({
+        page: page.name,
+        path: page.path,
+        lighthouse: lighthouseResults,
+        devtools: devtoolsResults,
+      });
+    }
 
-    // Summary
+    // Summary for all pages
     console.log('\n' + '═'.repeat(63));
-    console.log('                    ✅ TEST COMPLETE');
+    console.log('                    ✅ ALL TESTS COMPLETE');
     console.log('═'.repeat(63));
     
-    const perfScore = Math.round(lighthouseResults.categories.performance.score * 100);
-    console.log(`\n📊 Overall Performance Score: ${perfScore >= 90 ? '🟢' : perfScore >= 50 ? '🟡' : '🔴'} ${perfScore}/100`);
-    console.log(`⏱️  Page Load Time: ${formatTime(devtoolsResults.loadTime)}`);
-    console.log(`📦 Resources Loaded: ${devtoolsResults.resources.length}`);
+    console.log('\n┌─────────────────────────────────────────────────────────────┐');
+    console.log('│                    📊 SUMMARY BY PAGE                       │');
+    console.log('├─────────────────────────────────────────────────────────────┤');
+    
+    for (const result of allResults) {
+      const perfScore = Math.round(result.lighthouse.categories.performance.score * 100);
+      const a11yScore = Math.round(result.lighthouse.categories.accessibility.score * 100);
+      const emoji = perfScore >= 90 ? '🟢' : perfScore >= 50 ? '🟡' : '🔴';
+      const pageName = result.path.padEnd(15);
+      console.log(`│ ${emoji} ${pageName} Perf: ${String(perfScore).padStart(3)}%  A11y: ${String(a11yScore).padStart(3)}%  Load: ${formatTime(result.devtools.loadTime).padStart(8)} │`);
+    }
+    
+    console.log('└─────────────────────────────────────────────────────────────┘');
     
     console.log('\n📂 All reports saved in:', RESULTS_DIR);
-    console.log('   └── lighthouse-report.html   → Open in browser');
-    console.log('   └── lighthouse-report.json   → Raw Lighthouse data');
-    console.log('   └── devtools-trace.json      → Open in Chrome DevTools > Performance');
-    console.log('   └── devtools-metrics.json    → Detailed timing metrics\n');
+    for (const page of PAGES_TO_TEST) {
+      console.log(`   └── ${page.name}/`);
+      console.log(`       ├── lighthouse-${page.name}.html`);
+      console.log(`       ├── lighthouse-${page.name}.json`);
+      console.log(`       ├── devtools-trace-${page.name}.json`);
+      console.log(`       └── devtools-metrics-${page.name}.json`);
+    }
+    console.log('');
 
-    return { lighthouse: lighthouseResults, devtools: devtoolsResults };
+    // Force close with timeout to prevent hanging
+    if (browser) {
+      await Promise.race([
+        browser.close(),
+        new Promise(resolve => setTimeout(resolve, 5000))
+      ]).catch(() => {});
+    }
+
+    return allResults;
     
   } catch (error) {
     console.error('\n❌ Performance test failed:', error.message);
@@ -360,14 +421,21 @@ async function runPerformanceTests() {
       console.error('   Run: bun run dev');
       console.error('   Or specify a different URL: bun run test:perf --url=https://example.com');
     }
+
+    // Force close with timeout to prevent hanging
+    if (browser) {
+      await Promise.race([
+        browser.close(),
+        new Promise(resolve => setTimeout(resolve, 5000))
+      ]).catch(() => {});
+    }
     
     process.exit(1);
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }
 
 // Run tests
-runPerformanceTests();
+runPerformanceTests().then(() => {
+  // Force exit - browser processes on WSL2 can keep the event loop alive
+  process.exit(0);
+});
