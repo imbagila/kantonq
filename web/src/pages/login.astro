@@ -1,8 +1,11 @@
 ---
 import Layout from '../components/Layout.astro';
+import GuestGuard from "$lib/components/guest-guard.svelte";
 import LoginLayout from "$lib/components/login-03/+page.svelte";
 ---
 
 <Layout title="Login - Kantonq">
-    <LoginLayout client:load />
+    <GuestGuard client:load>
+        <LoginLayout client:load />
+    </GuestGuard>
 </Layout>
