@@ -6,8 +6,6 @@ import DashboardLayout from "$lib/components/sidebar-07/+page.svelte";
 
 <Layout title="Dashboard - Kantonq">
     <AuthGuard client:load>
-        {#snippet children()}
-            <DashboardLayout />
-        {/snippet}
+        <DashboardLayout client:load />
     </AuthGuard>
 </Layout>
