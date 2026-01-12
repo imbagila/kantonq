@@ -3,7 +3,7 @@
  * Uses localStorage for session persistence
  */
 
-import { writable, derived, get } from 'svelte/store';
+import { writable, derived, get } from "svelte/store";
 
 export interface GoogleUser {
   id: string;
@@ -22,7 +22,7 @@ export interface AuthState {
   error: string | null;
 }
 
-const AUTH_STORAGE_KEY = 'kantonq_auth';
+const AUTH_STORAGE_KEY = "kantonq_auth";
 
 function createAuthStore() {
   const initialState: AuthState = {
@@ -43,7 +43,7 @@ function createAuthStore() {
      * Call this on app startup
      */
     init: () => {
-      if (typeof window === 'undefined') return;
+      if (typeof window === "undefined") return;
 
       try {
         const stored = localStorage.getItem(AUTH_STORAGE_KEY);
@@ -51,7 +51,7 @@ function createAuthStore() {
           const parsed = JSON.parse(stored);
           // Check if token is still valid (basic check)
           if (parsed.accessToken && parsed.user) {
-            update(state => ({
+            update((state) => ({
               ...state,
               isAuthenticated: true,
               isLoading: false,
@@ -62,11 +62,11 @@ function createAuthStore() {
           }
         }
       } catch (e) {
-        console.error('Failed to restore auth state:', e);
+        console.error("Failed to restore auth state:", e);
         localStorage.removeItem(AUTH_STORAGE_KEY);
       }
 
-      update(state => ({ ...state, isLoading: false }));
+      update((state) => ({ ...state, isLoading: false }));
     },
 
     /**
@@ -76,7 +76,7 @@ function createAuthStore() {
       const authData = { user, accessToken };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
 
-      update(state => ({
+      update((state) => ({
         ...state,
         isAuthenticated: true,
         isLoading: false,
@@ -90,14 +90,14 @@ function createAuthStore() {
      * Set loading state
      */
     setLoading: (isLoading: boolean) => {
-      update(state => ({ ...state, isLoading }));
+      update((state) => ({ ...state, isLoading }));
     },
 
     /**
      * Set error state
      */
     setError: (error: string) => {
-      update(state => ({
+      update((state) => ({
         ...state,
         isLoading: false,
         error,
@@ -108,7 +108,7 @@ function createAuthStore() {
      * Clear error state
      */
     clearError: () => {
-      update(state => ({ ...state, error: null }));
+      update((state) => ({ ...state, error: null }));
     },
 
     /**
@@ -118,11 +118,11 @@ function createAuthStore() {
       localStorage.removeItem(AUTH_STORAGE_KEY);
 
       // Revoke Google token if possible
-      if (typeof google !== 'undefined' && google.accounts) {
+      if (typeof google !== "undefined" && google.accounts) {
         const currentState = get({ subscribe });
         if (currentState.accessToken) {
           google.accounts.oauth2.revoke(currentState.accessToken, () => {
-            console.log('Token revoked');
+            console.log("Token revoked");
           });
         }
       }
@@ -148,7 +148,7 @@ function createAuthStore() {
 export const auth = createAuthStore();
 
 // Derived stores for convenience
-export const isAuthenticated = derived(auth, $auth => $auth.isAuthenticated);
-export const isLoading = derived(auth, $auth => $auth.isLoading);
-export const user = derived(auth, $auth => $auth.user);
-export const authError = derived(auth, $auth => $auth.error);
+export const isAuthenticated = derived(auth, ($auth) => $auth.isAuthenticated);
+export const isLoading = derived(auth, ($auth) => $auth.isLoading);
+export const user = derived(auth, ($auth) => $auth.user);
+export const authError = derived(auth, ($auth) => $auth.error);

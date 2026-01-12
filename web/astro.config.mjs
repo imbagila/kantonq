@@ -18,18 +18,18 @@ export default defineConfig({
       rollupOptions: {
         output: {
           manualChunks: {
-            'svelte-runtime': ['svelte'],
-            'ui-icons': ['@lucide/svelte'],
-            'ui-components': ['bits-ui'],
-            'utils': ['clsx', 'tailwind-merge', 'tailwind-variants'],
-          }
-        }
-      }
+            "svelte-runtime": ["svelte"],
+            "ui-icons": ["@lucide/svelte"],
+            "ui-components": ["bits-ui"],
+            utils: ["clsx", "tailwind-merge", "tailwind-variants"],
+          },
+        },
+      },
     },
     // Optimize dependency pre-bundling
     optimizeDeps: {
-      include: ['svelte', 'bits-ui', 'mode-watcher'],
-    }
+      include: ["svelte", "bits-ui", "mode-watcher"],
+    },
   },
   devToolbar: {
     enabled: false,

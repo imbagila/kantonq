@@ -9,8 +9,8 @@
     "astro": "bunx --bun astro",
     "lint": "bunx --bun oxlint",
     "lint:fix": "bunx --bun oxlint --fix",
-    "format": "oxfmt",
-    "format:check": "oxfmt --check",
+    "format": "oxfmt src tests astro.config.mjs '!**/*.json' '!**/*.md' '!**/*.css'",
+    "format:check": "oxfmt --check src tests astro.config.mjs '!**/*.json' '!**/*.md' '!**/*.css'",
     "test:perf": "bun tests/performance.test.js"
   },
   "dependencies": {

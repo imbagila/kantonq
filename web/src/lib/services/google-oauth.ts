@@ -3,7 +3,7 @@
  * Handles Google Identity Services (GIS) integration for client-side OAuth
  */
 
-import { auth, type GoogleUser } from '$lib/stores/auth';
+import { auth, type GoogleUser } from "$lib/stores/auth";
 
 // Google OAuth configuration
 interface GoogleOAuthConfig {
@@ -13,8 +13,8 @@ interface GoogleOAuthConfig {
 
 // Default scopes for Google OAuth
 const DEFAULT_SCOPES = [
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/userinfo.profile',
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
 ];
 
 let tokenClient: google.accounts.oauth2.TokenClient | null = null;
@@ -30,22 +30,22 @@ export function loadGoogleScript(): Promise<void> {
       return;
     }
 
-    if (typeof window === 'undefined') {
-      reject(new Error('Window is not defined'));
+    if (typeof window === "undefined") {
+      reject(new Error("Window is not defined"));
       return;
     }
 
     // Check if script already exists
-    const existingScript = document.getElementById('google-gsi-script');
+    const existingScript = document.getElementById("google-gsi-script");
     if (existingScript) {
       isGsiLoaded = true;
       resolve();
       return;
     }
 
-    const script = document.createElement('script');
-    script.id = 'google-gsi-script';
-    script.src = 'https://accounts.google.com/gsi/client';
+    const script = document.createElement("script");
+    script.id = "google-gsi-script";
+    script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
 
@@ -55,7 +55,7 @@ export function loadGoogleScript(): Promise<void> {
     };
 
     script.onerror = () => {
-      reject(new Error('Failed to load Google Identity Services'));
+      reject(new Error("Failed to load Google Identity Services"));
     };
 
     document.head.appendChild(script);
@@ -65,18 +65,20 @@ export function loadGoogleScript(): Promise<void> {
 /**
  * Initialize Google OAuth client
  */
-export async function initGoogleOAuth(config: GoogleOAuthConfig): Promise<void> {
+export async function initGoogleOAuth(
+  config: GoogleOAuthConfig,
+): Promise<void> {
   await loadGoogleScript();
 
   const { clientId, scopes = DEFAULT_SCOPES } = config;
 
   if (!clientId) {
-    throw new Error('Google Client ID is required');
+    throw new Error("Google Client ID is required");
   }
 
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: scopes.join(' '),
+    scope: scopes.join(" "),
     callback: handleTokenResponse,
     error_callback: handleTokenError,
   });
@@ -85,7 +87,9 @@ export async function initGoogleOAuth(config: GoogleOAuthConfig): Promise<void> 
 /**
  * Handle successful token response
  */
-async function handleTokenResponse(response: google.accounts.oauth2.TokenResponse) {
+async function handleTokenResponse(
+  response: google.accounts.oauth2.TokenResponse,
+) {
   if (response.error) {
     auth.setError(response.error);
     return;
@@ -96,8 +100,8 @@ async function handleTokenResponse(response: google.accounts.oauth2.TokenRespons
     const userInfo = await fetchGoogleUserInfo(response.access_token);
     auth.setUser(userInfo, response.access_token);
   } catch (error) {
-    auth.setError('Failed to fetch user information');
-    console.error('Error fetching user info:', error);
+    auth.setError("Failed to fetch user information");
+    console.error("Error fetching user info:", error);
   }
 }
 
@@ -105,22 +109,25 @@ async function handleTokenResponse(response: google.accounts.oauth2.TokenRespons
  * Handle token error
  */
 function handleTokenError(error: google.accounts.oauth2.ClientConfigError) {
-  console.error('Google OAuth error:', error);
-  auth.setError(error.message || 'Authentication failed');
+  console.error("Google OAuth error:", error);
+  auth.setError(error.message || "Authentication failed");
 }
 
 /**
  * Fetch user info from Google API
  */
 async function fetchGoogleUserInfo(accessToken: string): Promise<GoogleUser> {
-  const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const response = await fetch(
+    "https://www.googleapis.com/oauth2/v2/userinfo",
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   if (!response.ok) {
-    throw new Error('Failed to fetch user info');
+    throw new Error("Failed to fetch user info");
   }
 
   const data = await response.json();
@@ -140,7 +147,7 @@ async function fetchGoogleUserInfo(accessToken: string): Promise<GoogleUser> {
  */
 export function loginWithGoogle(): void {
   if (!tokenClient) {
-    auth.setError('Google OAuth not initialized');
+    auth.setError("Google OAuth not initialized");
     return;
   }
 
@@ -148,7 +155,7 @@ export function loginWithGoogle(): void {
   auth.clearError();
 
   // Request access token
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+  tokenClient.requestAccessToken({ prompt: "consent" });
 }
 
 /**
