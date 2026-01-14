@@ -1,5 +1,5 @@
 {
-    "$schema": "https://oxc.rs/json-schemas/oxfmt/v0.json",
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
     "printWidth": 80,
     "indentStyle": "space",
     "indentWidth": 2,
@@ -10,5 +10,11 @@
     "trailingCommas": "all",
     "bracketSpacing": true,
     "bracketSameLine": false,
-    "arrowParens": "always"
+    "arrowParens": "always",
+    "ignorePatterns": [
+        "dist/**",
+        "node_modules/**",
+        "performance-results/**",
+        ".astro/**",
+    ]
 }

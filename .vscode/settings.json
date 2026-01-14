@@ -1,0 +1,22 @@
+{
+    "editor.codeActionsOnSave": {
+        "source.fixAll.oxc": "always"
+    },
+    "oxc.enable": true,
+    "oxc.typeAware": true,
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "typescript.experimental.useTsgo": true,
+    "[typescript]": {
+        "editor.defaultFormatter": "TypeScriptTeam.native-preview"
+    },
+    "oxc.fmt.configPath": "web/.oxfmtrc.json",
+    "oxc.path.oxlint": "web/node_modules/.bin/oxlint",
+    "oxc.path.oxfmt": "web/node_modules/.bin/oxfmt",
+    "oxc.path.tsgolint": "web/node_modules/.bin/tsgolint",
+    "oxc.configPath": "web/.oxlintrc.json",
+    "oxc.tsConfigPath": "web/tsconfig.json",
+    "editor.formatOnSave": true,
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    }
+}

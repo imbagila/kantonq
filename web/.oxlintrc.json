@@ -1,13 +1,22 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "warn"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "performance-results/**",
+    ".astro/**",
+  ],
   "plugins": [
     "unicorn",
     "typescript",
     "oxc"
   ],
-  "categories": {},
   "rules": {
     "constructor-super": "warn",
+    "eslint/no-unused-vars": "error",
     "for-direction": "warn",
     "no-async-promise-executor": "warn",
     "no-caller": "warn",
@@ -144,5 +153,4 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": []
 }
