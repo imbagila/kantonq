@@ -8,8 +8,10 @@
     "dist"
   ],
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
+      "*": [
+        "./*"
+      ],
       "$lib": [
         "./src/lib"
       ],
