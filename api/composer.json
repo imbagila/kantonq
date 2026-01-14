@@ -1,5 +1,9 @@
 {
+    "require": {
+        "php": ">=8.4"
+    },
     "require-dev": {
-        "phalcon/ide-stubs": "^5.9"
+        "phalcon/ide-stubs": "^5.9",
+        "friendsofphp/php-cs-fixer": "^3.92"
     }
 }

@@ -6,7 +6,8 @@
     "bmewburn.vscode-intelephense-client",
     "svelte.svelte-vscode",
     "typescriptteam.native-preview",
-    "yoavbls.pretty-ts-errors"
+    "yoavbls.pretty-ts-errors",
+    "junstyle.php-cs-fixer"
   ],
   "unwantedRecommendations": []
 }
