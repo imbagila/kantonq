@@ -5,11 +5,7 @@ Options -Indexes
 #Require all denied
 #Require ip 127.0.0.1
 
-<Files "index.php">
-  Require all granted
-</Files>
-
-<FilesMatch ".*">
+<FilesMatch "^(?!index\.php$).+$">
   Require all denied
 </FilesMatch>
 
