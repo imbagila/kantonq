@@ -1,0 +1,26 @@
+{
+  "name": "kantonq",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "typecheck": "bun run --filter '*' typecheck",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "test": "bun run --filter '*' test",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run test",
+    "db:up": "./scripts/db-up.sh",
+    "db:migrate": "bun run --filter @kantonq/db migrate",
+    "dev:api": "bun run --filter @kantonq/api dev",
+    "dev:web": "bun run --filter @kantonq/web dev"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
+    "typescript": "^7.0.2"
+  }
+}
