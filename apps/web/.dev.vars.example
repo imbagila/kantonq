@@ -1,5 +1,6 @@
 # The staging or local Supabase project. The anon key is the publishable key.
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
-# Where the web app calls the API. Staging deploys replace this with the API's workers.dev address.
+# Where the web app calls the API. Local only. Staging writes the workers.dev
+# address into wrangler.jsonc before deploy; it is not a Worker secret.
 API_URL=http://localhost:8787

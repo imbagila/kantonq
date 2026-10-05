@@ -103,7 +103,10 @@ jobs:
           API_URL: ${{ steps.api.outputs.url }}
         run: |
           set -euo pipefail
+          # API_URL is a plain var in wrangler.jsonc. Uploading it again as a
+          # secret fails with binding name already in use (error 10053).
+          sed -i "s|http://localhost:8787|${API_URL}|" wrangler.jsonc
           bun run deploy
-          bun -e 'await Bun.write("/tmp/kantonq-web-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPABASE_ANON_KEY: process.env.STAGING_SUPABASE_ANON_KEY, API_URL: process.env.API_URL }))'
+          bun -e 'await Bun.write("/tmp/kantonq-web-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPABASE_ANON_KEY: process.env.STAGING_SUPABASE_ANON_KEY }))'
           bunx wrangler secret bulk /tmp/kantonq-web-secrets.json
           rm -f /tmp/kantonq-web-secrets.json

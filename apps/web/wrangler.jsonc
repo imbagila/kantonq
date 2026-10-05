@@ -5,6 +5,8 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
+    // Staging deploys replace this with the API's workers.dev address.
+    // It stays a plain var: the same name cannot also be a Worker secret.
     "API_URL": "http://localhost:8787",
   },
 }
