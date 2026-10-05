@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./language": "./src/language.ts",
+    "./time-zone": "./src/time-zone.ts",
     "./money": "./src/money/index.ts",
     "./validation": "./src/validation/index.ts"
   },

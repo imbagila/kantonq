@@ -8,6 +8,7 @@ import { withDatabase } from "./database.ts";
 import { ApiError, errorBody, errorStatus } from "./errors.ts";
 import { requireAllowedPerson } from "./person.ts";
 import { allowedEmailRoutes } from "./routes/allowed-emails.ts";
+import { familyRoutes } from "./routes/families.ts";
 import { me } from "./routes/me.ts";
 
 export type Bindings = {
@@ -49,9 +50,14 @@ export function createApp() {
   app.use(requireSignIn);
   app.use(withDatabase);
   app.use(requireAllowedPerson);
+  app.use(async (c, next) => {
+    c.set("language", c.get("person").language);
+    await next();
+  });
 
   app.route("/me", me);
   app.route("/allowed-emails", allowedEmailRoutes);
+  app.route("/families", familyRoutes);
 
   app.notFound((c) => answerWithError(c, "not_found"));
 

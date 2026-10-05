@@ -15,6 +15,27 @@
       "when": 1791187140341,
       "tag": "0001_allowed_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791189466152,
+      "tag": "0002_families",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791189543108,
+      "tag": "0003_built_in_budgets",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791189634678,
+      "tag": "0004_current_family",
+      "breakpoints": true
     }
   ]
 }

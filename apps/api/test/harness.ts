@@ -97,6 +97,7 @@ function requester(databaseUrl: string) {
   return {
     get: (path: string, options?: TestRequest) => request("GET", path, options),
     post: (path: string, options?: TestRequest) => request("POST", path, options),
+    patch: (path: string, options?: TestRequest) => request("PATCH", path, options),
     delete: (path: string, options?: TestRequest) => request("DELETE", path, options),
   };
 

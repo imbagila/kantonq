@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { languages } from "../language.ts";
+import { isTimeZone } from "../time-zone.ts";
 
 export const languageSchema = z.enum(languages);
 
@@ -51,3 +52,94 @@ export const allowedEmailsResponseSchema = z.object({
 });
 
 export type AllowedEmailsResponse = z.infer<typeof allowedEmailsResponseSchema>;
+
+export const memberRoles = ["owner", "editor", "viewer"] as const;
+
+export const memberRoleSchema = z.enum(memberRoles);
+
+export type MemberRole = z.infer<typeof memberRoleSchema>;
+
+export const timeZoneSchema = z.string().refine(isTimeZone);
+
+export const createFamilySchema = z.object({
+  name: z.string().trim().min(1).max(80),
+});
+
+export const updateFamilySchema = z.object({
+  homeTimeZone: timeZoneSchema,
+});
+
+export const updateMembershipSchema = z.object({
+  timeZone: timeZoneSchema,
+});
+
+export const updatePersonSchema = z.object({
+  language: languageSchema,
+});
+
+export const switchFamilySchema = z.object({
+  familyId: z.uuid(),
+});
+
+export const updateMemberTimeZoneSchema = z.object({
+  familyId: z.uuid(),
+  timeZone: timeZoneSchema,
+});
+
+export const updateHomeTimeZoneSchema = z.object({
+  familyId: z.uuid(),
+  homeTimeZone: timeZoneSchema,
+});
+
+export type CreateFamily = z.infer<typeof createFamilySchema>;
+
+export const familySchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  homeTimeZone: z.string(),
+  role: memberRoleSchema,
+  timeZone: z.string(),
+});
+
+export type Family = z.infer<typeof familySchema>;
+
+export const familyResponseSchema = z.object({
+  family: familySchema,
+});
+
+export type FamilyResponse = z.infer<typeof familyResponseSchema>;
+
+export const familiesResponseSchema = z.object({
+  currentFamilyId: z.uuid().nullable(),
+  families: z.array(familySchema),
+});
+
+export type FamiliesResponse = z.infer<typeof familiesResponseSchema>;
+
+export const currentFamilyResponseSchema = z.object({
+  currentFamilyId: z.uuid(),
+});
+
+export type CurrentFamilyResponse = z.infer<typeof currentFamilyResponseSchema>;
+
+export const budgetSubtypeSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+});
+
+export type BudgetSubtype = z.infer<typeof budgetSubtypeSchema>;
+
+export const budgetSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  builtIn: z.boolean(),
+  subtypes: z.array(budgetSubtypeSchema),
+});
+
+export type Budget = z.infer<typeof budgetSchema>;
+
+export const budgetsResponseSchema = z.object({
+  budgets: z.array(budgetSchema),
+});
+
+export type BudgetsResponse = z.infer<typeof budgetsResponseSchema>;
