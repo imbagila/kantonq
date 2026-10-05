@@ -1,15 +1,15 @@
 import { describe, expect, spyOn, test } from "bun:test";
 
-import { signIn, useApiWithUnreachableDatabase, useTestApi } from "./harness.ts";
+import { signIn, superAdminEmail, useApiWithUnreachableDatabase, useTestApi } from "./harness.ts";
 
 const api = useTestApi();
 const apiWithoutDatabase = useApiWithUnreachableDatabase();
 
 describe("errors", () => {
   test("an unknown path answers with the not_found code", async () => {
-    const ani = await signIn();
+    const admin = await signIn(superAdminEmail);
 
-    const response = await api.get("/no-such-thing", { as: ani });
+    const response = await api.get("/no-such-thing", { as: admin });
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({

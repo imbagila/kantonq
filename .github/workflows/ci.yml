@@ -80,20 +80,30 @@ jobs:
         run: bun run db:migrate
 
       - name: Deploy the API
+        id: api
         working-directory: apps/api
         run: |
           set -euo pipefail
           sed -i "s/00000000-0000-0000-0000-000000000000/${STAGING_HYPERDRIVE_ID}/" wrangler.jsonc
-          bun run deploy
+          deploy_log=$(bun run deploy)
+          printf '%s\n' "$deploy_log"
+          url=$(printf '%s\n' "$deploy_log" | grep -oE 'https://kantonq-api\.[A-Za-z0-9.-]+\.workers\.dev' | head -1)
+          if [ -z "$url" ]; then
+            echo "Could not read the API workers.dev URL from the deploy output"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
           bun -e 'await Bun.write("/tmp/kantonq-api-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL }))'
           bunx wrangler secret bulk /tmp/kantonq-api-secrets.json
           rm -f /tmp/kantonq-api-secrets.json
 
       - name: Deploy the web app
         working-directory: apps/web
+        env:
+          API_URL: ${{ steps.api.outputs.url }}
         run: |
           set -euo pipefail
           bun run deploy
-          bun -e 'await Bun.write("/tmp/kantonq-web-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPABASE_ANON_KEY: process.env.STAGING_SUPABASE_ANON_KEY }))'
+          bun -e 'await Bun.write("/tmp/kantonq-web-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPABASE_ANON_KEY: process.env.STAGING_SUPABASE_ANON_KEY, API_URL: process.env.API_URL }))'
           bunx wrangler secret bulk /tmp/kantonq-web-secrets.json
           rm -f /tmp/kantonq-web-secrets.json

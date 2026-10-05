@@ -11,6 +11,9 @@ const serverUrl =
   process.env.TEST_DATABASE_URL ?? "postgres://postgres:postgres@localhost:54329/postgres";
 const supabaseUrl = "http://supabase.test";
 
+/** The configured super admin. They can sign in even when the allowed-email list is empty. */
+export const superAdminEmail = "super-admin@example.com";
+
 const trustedKey = await generateKeyPair("ES256", { extractable: true });
 const untrustedKey = await generateKeyPair("ES256");
 const trustedJwks = {
@@ -54,6 +57,7 @@ export async function signIn(
 export type TestRequest = {
   as?: TestPerson;
   acceptLanguage?: string;
+  body?: unknown;
 };
 
 /**
@@ -87,16 +91,26 @@ function requester(databaseUrl: string) {
     HYPERDRIVE: { connectionString: databaseUrl },
     SUPABASE_URL: supabaseUrl,
     SUPABASE_JWKS: JSON.stringify(trustedJwks),
+    SUPER_ADMIN_EMAIL: superAdminEmail,
   };
 
   return {
-    async get(path: string, options: TestRequest = {}): Promise<Response> {
-      const headers = new Headers();
-      if (options.as) headers.set("authorization", `Bearer ${options.as.token}`);
-      if (options.acceptLanguage) headers.set("accept-language", options.acceptLanguage);
-      return app.request(path, { headers }, env);
-    },
+    get: (path: string, options?: TestRequest) => request("GET", path, options),
+    post: (path: string, options?: TestRequest) => request("POST", path, options),
+    delete: (path: string, options?: TestRequest) => request("DELETE", path, options),
   };
+
+  function request(method: string, path: string, options: TestRequest = {}): Promise<Response> {
+    const headers = new Headers();
+    if (options.as) headers.set("authorization", `Bearer ${options.as.token}`);
+    if (options.acceptLanguage) headers.set("accept-language", options.acceptLanguage);
+    let body: string | undefined;
+    if (options.body !== undefined) {
+      headers.set("content-type", "application/json");
+      body = JSON.stringify(options.body);
+    }
+    return Promise.resolve(app.request(path, { method, headers, body }, env));
+  }
 }
 
 async function onServer(run: (sql: postgres.Sql) => Promise<unknown>): Promise<void> {

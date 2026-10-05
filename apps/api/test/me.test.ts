@@ -1,18 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
-import { signIn, useTestApi } from "./harness.ts";
+import { signIn, superAdminEmail, useTestApi } from "./harness.ts";
 
 const api = useTestApi();
 
 describe("who am I", () => {
   test("a signed-in person sees who they are, with Indonesian as their language", async () => {
-    const ani = await signIn("ani@example.com");
+    const admin = await signIn(superAdminEmail);
 
-    const response = await api.get("/me", { as: ani });
+    const response = await api.get("/me", { as: admin });
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      person: { id: ani.id, email: "ani@example.com", language: "id" },
+      person: { id: admin.id, email: superAdminEmail, language: "id" },
     });
   });
 

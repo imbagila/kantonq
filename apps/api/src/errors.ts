@@ -10,6 +10,24 @@ const errors: Record<
     status: 401,
     message: { id: "Silakan masuk terlebih dahulu.", en: "Please sign in first." },
   },
+  not_allowed_email: {
+    status: 403,
+    message: {
+      id: "Email ini belum diundang. Minta undangan untuk masuk.",
+      en: "This email hasn't been invited. Ask for an invite to sign in.",
+    },
+  },
+  forbidden_role: {
+    status: 403,
+    message: {
+      id: "Anda tidak memiliki izin untuk melakukan ini.",
+      en: "You don't have permission to do this.",
+    },
+  },
+  invalid_request: {
+    status: 400,
+    message: { id: "Permintaan tidak valid.", en: "The request is invalid." },
+  },
   not_found: {
     status: 404,
     message: { id: "Tidak ditemukan.", en: "Not found." },

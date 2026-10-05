@@ -4,7 +4,14 @@ import { languages } from "../language.ts";
 
 export const languageSchema = z.enum(languages);
 
-export const errorCodes = ["unauthenticated", "not_found", "internal_error"] as const;
+export const errorCodes = [
+  "unauthenticated",
+  "not_allowed_email",
+  "forbidden_role",
+  "invalid_request",
+  "not_found",
+  "internal_error",
+] as const;
 
 export const errorCodeSchema = z.enum(errorCodes);
 
@@ -32,3 +39,15 @@ export const meResponseSchema = z.object({
 });
 
 export type MeResponse = z.infer<typeof meResponseSchema>;
+
+export const allowedEmailSchema = z.object({
+  email: z.email(),
+});
+
+export type AllowedEmail = z.infer<typeof allowedEmailSchema>;
+
+export const allowedEmailsResponseSchema = z.object({
+  allowedEmails: z.array(allowedEmailSchema),
+});
+
+export type AllowedEmailsResponse = z.infer<typeof allowedEmailsResponseSchema>;

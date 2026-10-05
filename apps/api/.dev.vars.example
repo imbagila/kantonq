@@ -1,2 +1,4 @@
 # Tokens are verified against this project's signing keys at /auth/v1/.well-known/jwks.json
 SUPABASE_URL=https://your-project-ref.supabase.co
+# The Google account that can always sign in, even when the allowed-email list is empty.
+SUPER_ADMIN_EMAIL=you@example.com

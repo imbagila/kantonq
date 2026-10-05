@@ -30,11 +30,16 @@ bun run db:migrate   # applies migrations to the local database
 
 ```sh
 cp apps/api/.dev.vars.example apps/api/.dev.vars
+cp apps/web/.dev.vars.example apps/web/.dev.vars
 bun run dev:api      # API on http://localhost:8787
 bun run dev:web      # web app on http://localhost:3000
 ```
 
+Fill in both `.dev.vars` files from the Supabase project. `SUPER_ADMIN_EMAIL` on the API is the Google account that can always sign in. The web app's `API_URL` stays `http://localhost:8787` locally.
+
 `wrangler dev` connects to the local Podman database through the `HYPERDRIVE` binding's `localConnectionString` in `apps/api/wrangler.jsonc`. The API refuses every request without a valid Supabase access token, so `curl http://localhost:8787/me` answers `401` with the `unauthenticated` error code until sign-in exists. Tokens are checked against the signing keys of the project in `SUPABASE_URL`.
+
+Sign-in on the landing page uses that same Supabase project. In Authentication → URL Configuration, allow `http://localhost:3000` (and the staging web address) as a redirect URL. Google's own redirect stays `https://<project-ref>.supabase.co/auth/v1/callback`. A signed-in visit to `/` goes to `/dashboard`. A signed-out visit to an app page goes back to `/`. An email that isn't the super admin's and isn't on the allowed-email list is turned away: the API answers `not_allowed_email`, and the landing page explains that an invite is needed.
 
 ## Checks
 
@@ -66,7 +71,7 @@ Every push runs type-checking, lint, the format check and all tests in GitHub Ac
 | Web    | `kantonq-web` | `https://kantonq-web.<account>.workers.dev` |
 | API    | `kantonq-api` | `https://kantonq-api.<account>.workers.dev` |
 
-`<account>` is the Cloudflare account's `workers.dev` subdomain. The web address serves the placeholder landing page. The API answers `GET /me` once it has a Supabase access token.
+`<account>` is the Cloudflare account's `workers.dev` subdomain. The landing page signs in with Google. The deploy job points the web Worker at the API's `workers.dev` address. The API answers `GET /me` once it has a Supabase access token for an allowed email.
 
 Production sign-in is Google only. The staging Supabase project additionally has email-and-password enabled for one Playwright user. That login method is never enabled in production. The user's password stays in the Supabase project and, when the Playwright flows land, in a GitHub secret. It is never committed.
 
