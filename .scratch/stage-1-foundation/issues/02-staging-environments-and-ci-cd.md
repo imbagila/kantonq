@@ -28,6 +28,6 @@ What the local values and the live services show:
 - Hyperdrive config `kantonq` exists. Its origin is the staging direct host on port 5432, database `postgres`, user `postgres`. The Cloudflare id is 32 hex characters with no dashes. The deploy job accepts that form as well as a dashed UUID.
 - Workers on the `imbagila` subdomain are `gitlab-telegram-webhook` and `kantonq` (a different script, binding `VITE_APP_TITLE`). `kantonq-api` and `kantonq-web` are not deployed.
 - The Cloudflare API token is active and the account id is valid. `STAGING_SUPABASE_ANON_KEY` is the same value as the account id, and Supabase rejects it as an invalid API key. A real anon key is a JWT (`eyJ…`) or a publishable key (`sb_publishable_…`).
-- The direct database host has no IPv4 address. A connection from this machine was refused over IPv6, so the password was not confirmed from here.
+- The direct database host has no IPv4 address. GitHub-hosted runners cannot connect to it (`ECONNREFUSED` on the IPv6 address). The deploy job rewrites that URL to the session pooler `aws-0-ap-northeast-2.pooler.supabase.com` (user `postgres.<ref>`, port 5432) before migrating. Hyperdrive still uses the direct host, which Cloudflare can reach.
 
 Acting with the user's token so row-level security applies waits until policies exist. There is no family membership yet, and the test Postgres is not Supabase, so switching to the `authenticated` role now would make `GET /me` fail. The connection itself does go through Hyperdrive.

@@ -72,15 +72,17 @@ Production sign-in is Google only. The staging Supabase project additionally has
 
 These values are created by a person and stored as GitHub secrets. Nothing in this list belongs in the repository:
 
-| GitHub secret               | Where it comes from                                                                                                               | Where CI puts it                      |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`      | Cloudflare API token that can edit Workers                                                                                        | the deploy job                        |
-| `CLOUDFLARE_ACCOUNT_ID`     | Cloudflare account id                                                                                                             | the deploy job                        |
-| `STAGING_DATABASE_URL`      | Supabase direct connection string (`db.<ref>.supabase.co`, port 5432, `sslmode=require`). Not the transaction pooler on port 6543 | migrations                            |
-| `STAGING_HYPERDRIVE_ID`     | Hyperdrive config whose origin is that same database                                                                              | the API Worker's `HYPERDRIVE` binding |
-| `STAGING_SUPABASE_URL`      | Supabase project URL                                                                                                              | `SUPABASE_URL` on both Workers        |
-| `STAGING_SUPABASE_ANON_KEY` | Supabase anon (publishable) key                                                                                                   | `SUPABASE_ANON_KEY` on the web Worker |
-| `SUPER_ADMIN_EMAIL`         | the Google account that must always be allowed to sign in                                                                         | `SUPER_ADMIN_EMAIL` on the API Worker |
+| GitHub secret               | Where it comes from                                                                      | Where CI puts it                      |
+| --------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`      | Cloudflare API token that can edit Workers                                               | the deploy job                        |
+| `CLOUDFLARE_ACCOUNT_ID`     | Cloudflare account id                                                                    | the deploy job                        |
+| `STAGING_DATABASE_URL`      | Supabase direct connection string (`db.<ref>.supabase.co`, port 5432, `sslmode=require`) | migrations                            |
+| `STAGING_HYPERDRIVE_ID`     | Hyperdrive config whose origin is that same database                                     | the API Worker's `HYPERDRIVE` binding |
+| `STAGING_SUPABASE_URL`      | Supabase project URL                                                                     | `SUPABASE_URL` on both Workers        |
+| `STAGING_SUPABASE_ANON_KEY` | Supabase anon (publishable) key                                                          | `SUPABASE_ANON_KEY` on the web Worker |
+| `SUPER_ADMIN_EMAIL`         | the Google account that must always be allowed to sign in                                | `SUPER_ADMIN_EMAIL` on the API Worker |
+
+The direct database host is IPv6-only, and GitHub-hosted runners are IPv4-only. The migrate step rewrites `STAGING_DATABASE_URL` to the session pooler in `SUPABASE_SESSION_POOLER_HOST` (`aws-0-ap-northeast-2.pooler.supabase.com` for this project, user `postgres.<project-ref>`, port 5432). Change that host if the project moves region. Migrations need that session-mode port. Hyperdrive keeps the direct connection string, which Cloudflare can reach.
 
 The API verifies tokens with the staging project's published keys at `/auth/v1/.well-known/jwks.json`. It does not use the Supabase service-role key or the legacy JWT secret. Do not store either of those in the repository or on a Worker.
 

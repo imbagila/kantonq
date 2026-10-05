@@ -74,6 +74,9 @@ jobs:
       - name: Apply migrations to staging
         env:
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+          # Runners cannot reach the IPv6-only direct host. Session mode on this
+          # pooler is the IPv4 path. Port 6543 (transaction mode) cannot migrate.
+          SUPABASE_SESSION_POOLER_HOST: aws-0-ap-northeast-2.pooler.supabase.com
         run: bun run db:migrate
 
       - name: Deploy the API

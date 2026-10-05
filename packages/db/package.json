@@ -8,6 +8,7 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
+    "test": "bun test",
     "generate": "drizzle-kit generate",
     "migrate": "bun run src/migrate-cli.ts"
   },
