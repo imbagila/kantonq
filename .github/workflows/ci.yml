@@ -66,7 +66,7 @@ jobs:
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
-          if ! [[ "$STAGING_HYPERDRIVE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+          if ! [[ "$STAGING_HYPERDRIVE_ID" =~ ^[0-9a-fA-F]{32}$ || "$STAGING_HYPERDRIVE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
             echo "STAGING_HYPERDRIVE_ID is not a Hyperdrive id"
             exit 1
           fi
