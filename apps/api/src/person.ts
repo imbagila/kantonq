@@ -11,9 +11,18 @@ const { persons, allowedEmails } = schema;
 
 const personColumns = { id: persons.id, email: persons.email, language: persons.language };
 
-async function findPerson(db: Database, personId: string) {
+async function findPerson(db: Pick<Database, "select">, personId: string) {
   const [person] = await db.select(personColumns).from(persons).where(eq(persons.id, personId));
   return person;
+}
+
+async function isAllowedEmail(db: Pick<Database, "select">, email: string) {
+  const [allowedEmail] = await db
+    .select({ email: allowedEmails.email })
+    .from(allowedEmails)
+    .where(eq(allowedEmails.email, email))
+    .limit(1);
+  return allowedEmail !== undefined;
 }
 
 /**
@@ -31,28 +40,30 @@ export const requireAllowedPerson = createMiddleware<Env>(async (c, next) => {
   const existing = await findPerson(db, personId);
 
   if (existing) {
-    await acceptPendingInvites(db, existing);
+    await db.transaction((tx) => acceptPendingInvites(tx, existing));
     c.set("person", existing);
     c.set("isSuperAdmin", superAdmin);
     await next();
     return;
   }
 
-  if (!superAdmin) {
-    const [allowedEmail] = await db
-      .select({ email: allowedEmails.email })
-      .from(allowedEmails)
-      .where(eq(allowedEmails.email, normalized))
-      .limit(1);
-    if (!allowedEmail && !(await hasPendingInvite(db, normalized))) {
-      throw new ApiError("not_allowed_email");
-    }
+  if (
+    !superAdmin &&
+    !(await isAllowedEmail(db, normalized)) &&
+    !(await hasPendingInvite(db, normalized))
+  ) {
+    throw new ApiError("not_allowed_email");
   }
 
-  await db.insert(persons).values({ id: personId, email }).onConflictDoNothing();
-  const person = await findPerson(db, personId);
-  if (!person) throw new Error("The signed-in person has no row after inserting it");
-  await acceptPendingInvites(db, person);
+  const person = await db.transaction(async (tx) => {
+    const allowed = superAdmin || (await isAllowedEmail(tx, normalized));
+    await tx.insert(persons).values({ id: personId, email }).onConflictDoNothing();
+    const created = await findPerson(tx, personId);
+    if (!created) throw new Error("The signed-in person has no row after inserting it");
+    const joined = await acceptPendingInvites(tx, created);
+    if (!allowed && !joined) throw new ApiError("not_allowed_email");
+    return created;
+  });
 
   c.set("person", person);
   c.set("isSuperAdmin", superAdmin);
