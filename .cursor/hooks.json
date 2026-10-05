@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": ".cursor/hooks/mark-implement.py"
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/commit-after-implement.py",
+        "loop_limit": 5
+      }
+    ]
+  }
+}
