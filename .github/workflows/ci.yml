@@ -8,7 +8,8 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # ubuntu-latest moves to Ubuntu 26 between 2026-10-19 and 2026-11-19.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17-alpine
@@ -37,7 +38,8 @@ jobs:
     needs: check
     # master is the primary branch. main is included so a later rename still deploys.
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    # ubuntu-latest moves to Ubuntu 26 between 2026-10-19 and 2026-11-19.
+    runs-on: ubuntu-24.04
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
