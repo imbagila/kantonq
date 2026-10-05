@@ -9,7 +9,11 @@ import { ApiError, errorBody, errorStatus } from "./errors.ts";
 import { me } from "./routes/me.ts";
 
 export type Bindings = {
-  DATABASE_URL: string;
+  /**
+   * Postgres, reached through Cloudflare Hyperdrive.
+   * Tests and `wrangler dev` supply a direct connection string on this same binding.
+   */
+  HYPERDRIVE: { connectionString: string };
   /** The Supabase project URL; tokens must be issued by its Auth server. */
   SUPABASE_URL: string;
   /** A JSON Web Key Set to trust instead of the project's published keys, for tests and local development. */

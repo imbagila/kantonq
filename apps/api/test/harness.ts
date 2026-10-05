@@ -84,7 +84,7 @@ export function useApiWithUnreachableDatabase() {
 
 function requester(databaseUrl: string) {
   const env: Bindings = {
-    DATABASE_URL: databaseUrl,
+    HYPERDRIVE: { connectionString: databaseUrl },
     SUPABASE_URL: supabaseUrl,
     SUPABASE_JWKS: JSON.stringify(trustedJwks),
   };

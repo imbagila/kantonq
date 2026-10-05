@@ -7,4 +7,13 @@
   "dev": {
     "port": 8787,
   },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Staging deploys replace this placeholder with the STAGING_HYPERDRIVE_ID secret.
+      // Local development uses localConnectionString and never contacts Hyperdrive.
+      "id": "00000000-0000-0000-0000-000000000000",
+      "localConnectionString": "postgres://postgres:postgres@localhost:54329/kantonq",
+    },
+  ],
 }

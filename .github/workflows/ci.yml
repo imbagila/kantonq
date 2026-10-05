@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+
+  deploy:
+    needs: check
+    # master is the primary branch. main is included so a later rename still deploys.
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      STAGING_HYPERDRIVE_ID: ${{ secrets.STAGING_HYPERDRIVE_ID }}
+      STAGING_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      STAGING_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      SUPER_ADMIN_EMAIL: ${{ secrets.SUPER_ADMIN_EMAIL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+
+      - name: Require staging secrets
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID STAGING_DATABASE_URL STAGING_HYPERDRIVE_ID STAGING_SUPABASE_URL STAGING_SUPABASE_ANON_KEY SUPER_ADMIN_EMAIL; do
+            if [ -z "${!name}" ]; then
+              echo "Missing GitHub secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          if ! [[ "$STAGING_HYPERDRIVE_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+            echo "STAGING_HYPERDRIVE_ID is not a Hyperdrive id"
+            exit 1
+          fi
+
+      - name: Apply migrations to staging
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: bun run db:migrate
+
+      - name: Deploy the API
+        working-directory: apps/api
+        run: |
+          set -euo pipefail
+          sed -i "s/00000000-0000-0000-0000-000000000000/${STAGING_HYPERDRIVE_ID}/" wrangler.jsonc
+          bun run deploy
+          bun -e 'await Bun.write("/tmp/kantonq-api-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL }))'
+          bunx wrangler secret bulk /tmp/kantonq-api-secrets.json
+          rm -f /tmp/kantonq-api-secrets.json
+
+      - name: Deploy the web app
+        working-directory: apps/web
+        run: |
+          set -euo pipefail
+          bun run deploy
+          bun -e 'await Bun.write("/tmp/kantonq-web-secrets.json", JSON.stringify({ SUPABASE_URL: process.env.STAGING_SUPABASE_URL, SUPABASE_ANON_KEY: process.env.STAGING_SUPABASE_ANON_KEY }))'
+          bunx wrangler secret bulk /tmp/kantonq-web-secrets.json
+          rm -f /tmp/kantonq-web-secrets.json

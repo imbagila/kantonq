@@ -34,7 +34,7 @@ bun run dev:api      # API on http://localhost:8787
 bun run dev:web      # web app on http://localhost:3000
 ```
 
-The API refuses every request without a valid Supabase access token, so `curl http://localhost:8787/me` answers `401` with the `unauthenticated` error code until sign-in exists. Tokens are checked against the signing keys of the project in `SUPABASE_URL`.
+`wrangler dev` connects to the local Podman database through the `HYPERDRIVE` binding's `localConnectionString` in `apps/api/wrangler.jsonc`. The API refuses every request without a valid Supabase access token, so `curl http://localhost:8787/me` answers `401` with the `unauthenticated` error code until sign-in exists. Tokens are checked against the signing keys of the project in `SUPABASE_URL`.
 
 ## Checks
 
@@ -56,3 +56,37 @@ Edit `packages/db/src/schema.ts`, then generate a migration and apply it:
 bun run --filter @kantonq/db generate
 bun run db:migrate
 ```
+
+## Staging
+
+Every push runs type-checking, lint, the format check and all tests in GitHub Actions, against Postgres 17 as a service container. A push to the repository's primary branch (`master`, and `main` if it is renamed) also applies migrations to the staging database and deploys:
+
+| Worker | Name          | Address                                     |
+| ------ | ------------- | ------------------------------------------- |
+| Web    | `kantonq-web` | `https://kantonq-web.<account>.workers.dev` |
+| API    | `kantonq-api` | `https://kantonq-api.<account>.workers.dev` |
+
+`<account>` is the Cloudflare account's `workers.dev` subdomain. The web address serves the placeholder landing page. The API answers `GET /me` once it has a Supabase access token.
+
+Production sign-in is Google only. The staging Supabase project additionally has email-and-password enabled for one Playwright user. That login method is never enabled in production. The user's password stays in the Supabase project and, when the Playwright flows land, in a GitHub secret. It is never committed.
+
+These values are created by a person and stored as GitHub secrets. Nothing in this list belongs in the repository:
+
+| GitHub secret               | Where it comes from                                                                                                               | Where CI puts it                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`      | Cloudflare API token that can edit Workers                                                                                        | the deploy job                        |
+| `CLOUDFLARE_ACCOUNT_ID`     | Cloudflare account id                                                                                                             | the deploy job                        |
+| `STAGING_DATABASE_URL`      | Supabase direct connection string (`db.<ref>.supabase.co`, port 5432, `sslmode=require`). Not the transaction pooler on port 6543 | migrations                            |
+| `STAGING_HYPERDRIVE_ID`     | Hyperdrive config whose origin is that same database                                                                              | the API Worker's `HYPERDRIVE` binding |
+| `STAGING_SUPABASE_URL`      | Supabase project URL                                                                                                              | `SUPABASE_URL` on both Workers        |
+| `STAGING_SUPABASE_ANON_KEY` | Supabase anon (publishable) key                                                                                                   | `SUPABASE_ANON_KEY` on the web Worker |
+| `SUPER_ADMIN_EMAIL`         | the Google account that must always be allowed to sign in                                                                         | `SUPER_ADMIN_EMAIL` on the API Worker |
+
+The API verifies tokens with the staging project's published keys at `/auth/v1/.well-known/jwks.json`. It does not use the Supabase service-role key or the legacy JWT secret. Do not store either of those in the repository or on a Worker.
+
+Before the first deploy, a person needs to:
+
+1. Push this repository to GitHub.
+2. Create a Supabase project for staging, enable Google sign-in (the provider's redirect URL is `https://<project-ref>.supabase.co/auth/v1/callback`), and enable email-and-password for the single Playwright user.
+3. Create a Cloudflare Hyperdrive configuration aimed at the staging database's direct connection string.
+4. Add the secrets above to the GitHub repository. The Workers are created by the deploy itself.
