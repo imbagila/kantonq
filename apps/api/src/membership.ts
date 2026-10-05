@@ -8,6 +8,7 @@ import { ApiError } from "./errors.ts";
 const { families, members } = schema;
 
 export type Membership = {
+  memberId: string;
   familyId: string;
   name: string;
   homeTimeZone: string;
@@ -25,6 +26,7 @@ export async function activeMembership(
 
   const [row] = await db
     .select({
+      memberId: members.id,
       familyId: families.id,
       name: families.name,
       homeTimeZone: families.homeTimeZone,

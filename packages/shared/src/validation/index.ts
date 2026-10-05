@@ -9,6 +9,7 @@ export const errorCodes = [
   "unauthenticated",
   "not_allowed_email",
   "forbidden_role",
+  "last_owner",
   "invalid_request",
   "not_found",
   "internal_error",
@@ -143,3 +144,62 @@ export const budgetsResponseSchema = z.object({
 });
 
 export type BudgetsResponse = z.infer<typeof budgetsResponseSchema>;
+
+export const createInviteSchema = z.object({
+  email: z.email(),
+  role: memberRoleSchema,
+});
+
+export const inviteSchema = z.object({
+  id: z.uuid(),
+  email: z.email(),
+  role: memberRoleSchema,
+});
+
+export type Invite = z.infer<typeof inviteSchema>;
+
+export const inviteResponseSchema = z.object({
+  invite: inviteSchema,
+});
+
+export type InviteResponse = z.infer<typeof inviteResponseSchema>;
+
+export const memberSchema = z.object({
+  id: z.uuid(),
+  email: z.email(),
+  displayName: z.string(),
+  role: memberRoleSchema,
+});
+
+export type Member = z.infer<typeof memberSchema>;
+
+export const membersResponseSchema = z.object({
+  members: z.array(memberSchema),
+  invites: z.array(inviteSchema),
+});
+
+export type MembersResponse = z.infer<typeof membersResponseSchema>;
+
+export const updateMemberRoleSchema = z.object({
+  role: memberRoleSchema,
+});
+
+export const memberResponseSchema = z.object({
+  member: memberSchema,
+});
+
+export type MemberResponse = z.infer<typeof memberResponseSchema>;
+
+export const inviteToFamilySchema = createInviteSchema.extend({
+  familyId: z.uuid(),
+});
+
+export const cancelInviteSchema = z.object({
+  familyId: z.uuid(),
+  inviteId: z.uuid(),
+});
+
+export const changeMemberRoleSchema = updateMemberRoleSchema.extend({
+  familyId: z.uuid(),
+  memberId: z.uuid(),
+});

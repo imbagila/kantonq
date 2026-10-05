@@ -1,13 +1,20 @@
 import {
+  cancelInviteSchema,
+  changeMemberRoleSchema,
   createFamilySchema,
   currentFamilyResponseSchema,
   familiesResponseSchema,
   familyResponseSchema,
+  inviteResponseSchema,
+  inviteToFamilySchema,
   meResponseSchema,
+  memberResponseSchema,
+  membersResponseSchema,
   switchFamilySchema,
   updateHomeTimeZoneSchema,
   updateMemberTimeZoneSchema,
   updatePersonSchema,
+  type MemberRole,
 } from "@kantonq/shared/validation";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -60,6 +67,50 @@ export const updateTimeZone = createServerFn({ method: "POST" })
     });
     if (!result.ok) return { ok: false as const, message: result.message };
     return { ok: true as const, family: familyResponseSchema.parse(result.body).family };
+  });
+
+export const listMembers = createServerFn({ method: "GET" })
+  .validator((input: { familyId: string }) => switchFamilySchema.parse(input))
+  .handler(async ({ data }) => {
+    const result = await callApi(`/families/${data.familyId}/members`);
+    if (!result.ok) throw new Error(result.message);
+    return membersResponseSchema.parse(result.body);
+  });
+
+export const inviteMember = createServerFn({ method: "POST" })
+  .validator((input: { familyId: string; email: string; role: MemberRole }) =>
+    inviteToFamilySchema.parse(input),
+  )
+  .handler(async ({ data }) => {
+    const result = await callApi(`/families/${data.familyId}/invites`, {
+      method: "POST",
+      body: { email: data.email, role: data.role },
+    });
+    if (!result.ok) return { ok: false as const, message: result.message };
+    return { ok: true as const, invite: inviteResponseSchema.parse(result.body).invite };
+  });
+
+export const cancelInvite = createServerFn({ method: "POST" })
+  .validator((input: { familyId: string; inviteId: string }) => cancelInviteSchema.parse(input))
+  .handler(async ({ data }) => {
+    const result = await callApi(`/families/${data.familyId}/invites/${data.inviteId}`, {
+      method: "DELETE",
+    });
+    if (!result.ok) return { ok: false as const, message: result.message };
+    return { ok: true as const };
+  });
+
+export const updateMemberRole = createServerFn({ method: "POST" })
+  .validator((input: { familyId: string; memberId: string; role: MemberRole }) =>
+    changeMemberRoleSchema.parse(input),
+  )
+  .handler(async ({ data }) => {
+    const result = await callApi(`/families/${data.familyId}/members/${data.memberId}`, {
+      method: "PATCH",
+      body: { role: data.role },
+    });
+    if (!result.ok) return { ok: false as const, message: result.message };
+    return { ok: true as const, member: memberResponseSchema.parse(result.body).member };
   });
 
 export const updateHomeTimeZone = createServerFn({ method: "POST" })

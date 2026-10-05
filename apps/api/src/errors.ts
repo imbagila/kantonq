@@ -24,6 +24,13 @@ const errors: Record<
       en: "You don't have permission to do this.",
     },
   },
+  last_owner: {
+    status: 409,
+    message: {
+      id: "Keluarga harus tetap memiliki satu pemilik.",
+      en: "The family must keep one owner.",
+    },
+  },
   invalid_request: {
     status: 400,
     message: { id: "Permintaan tidak valid.", en: "The request is invalid." },

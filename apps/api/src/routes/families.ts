@@ -2,7 +2,9 @@ import { schema, type Database } from "@kantonq/db";
 import { defaultTimeZone } from "@kantonq/shared/time-zone";
 import {
   createFamilySchema,
+  createInviteSchema,
   updateFamilySchema,
+  updateMemberRoleSchema,
   updateMembershipSchema,
   type Budget,
   type BudgetsResponse,
@@ -10,16 +12,21 @@ import {
   type FamiliesResponse,
   type Family,
   type FamilyResponse,
+  type InviteResponse,
+  type MemberResponse,
+  type MembersResponse,
 } from "@kantonq/shared/validation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
+import { z } from "zod";
 
 import type { Env } from "../app.ts";
+import { normalizeEmail } from "../email.ts";
 import { ApiError } from "../errors.ts";
 import { uuidv7 } from "../ids.ts";
 import { activeMembership, assertOwner, type Membership } from "../membership.ts";
 
-const { families, members, persons, budgets, budgetSubtypes } = schema;
+const { families, members, persons, budgets, budgetSubtypes, invites } = schema;
 
 const builtInBudgets: readonly { name: string; subtypes: readonly string[] }[] = [
   { name: "Biaya", subtypes: ["Admin Transfer", "Admin Bulanan", "Biaya Kurs"] },
@@ -163,6 +170,159 @@ familyRoutes.patch("/:familyId", async (c) => {
   } satisfies FamilyResponse);
 });
 
+familyRoutes.post("/:familyId/invites", async (c) => {
+  const membership = await activeMembership(
+    c.get("db"),
+    c.get("person").id,
+    c.req.param("familyId"),
+  );
+  assertOwner(membership);
+  const parsed = createInviteSchema.safeParse(await readJson(c));
+  if (!parsed.success) throw new ApiError("invalid_request");
+
+  const email = normalizeEmail(parsed.data.email);
+  const db = c.get("db");
+  const [alreadyMember] = await db
+    .select({ id: members.id })
+    .from(members)
+    .innerJoin(persons, eq(members.personId, persons.id))
+    .where(and(eq(members.familyId, membership.familyId), sql`lower(${persons.email}) = ${email}`))
+    .limit(1);
+  if (alreadyMember) throw new ApiError("invalid_request");
+
+  const [pendingInvite] = await db
+    .select({ id: invites.id })
+    .from(invites)
+    .where(
+      and(
+        eq(invites.familyId, membership.familyId),
+        eq(invites.email, email),
+        eq(invites.state, "pending"),
+      ),
+    )
+    .limit(1);
+  if (pendingInvite) throw new ApiError("invalid_request");
+
+  const invite = { id: uuidv7(), email, role: parsed.data.role };
+  try {
+    await db.insert(invites).values({
+      id: invite.id,
+      familyId: membership.familyId,
+      email,
+      role: invite.role,
+      invitedByMemberId: membership.memberId,
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) throw new ApiError("invalid_request");
+    throw error;
+  }
+
+  return c.json({ invite } satisfies InviteResponse, 201);
+});
+
+familyRoutes.delete("/:familyId/invites/:inviteId", async (c) => {
+  const membership = await activeMembership(
+    c.get("db"),
+    c.get("person").id,
+    c.req.param("familyId"),
+  );
+  assertOwner(membership);
+  const inviteId = c.req.param("inviteId");
+  if (!z.uuid().safeParse(inviteId).success) throw new ApiError("not_found");
+
+  const [cancelled] = await c
+    .get("db")
+    .update(invites)
+    .set({ state: "cancelled" })
+    .where(
+      and(
+        eq(invites.id, inviteId),
+        eq(invites.familyId, membership.familyId),
+        eq(invites.state, "pending"),
+      ),
+    )
+    .returning({ id: invites.id });
+  if (!cancelled) throw new ApiError("not_found");
+  return c.body(null, 204);
+});
+
+familyRoutes.get("/:familyId/members", async (c) => {
+  const membership = await activeMembership(
+    c.get("db"),
+    c.get("person").id,
+    c.req.param("familyId"),
+  );
+  const db = c.get("db");
+  const memberRows = await db
+    .select({
+      id: members.id,
+      email: persons.email,
+      displayName: members.displayName,
+      role: members.role,
+    })
+    .from(members)
+    .innerJoin(persons, eq(members.personId, persons.id))
+    .where(and(eq(members.familyId, membership.familyId), eq(members.active, true)))
+    .orderBy(members.createdAt);
+  const inviteRows = await db
+    .select({ id: invites.id, email: invites.email, role: invites.role })
+    .from(invites)
+    .where(and(eq(invites.familyId, membership.familyId), eq(invites.state, "pending")))
+    .orderBy(invites.createdAt);
+
+  return c.json({ members: memberRows, invites: inviteRows } satisfies MembersResponse);
+});
+
+familyRoutes.patch("/:familyId/members/:memberId", async (c) => {
+  const membership = await activeMembership(
+    c.get("db"),
+    c.get("person").id,
+    c.req.param("familyId"),
+  );
+  assertOwner(membership);
+  const memberId = c.req.param("memberId");
+  if (!z.uuid().safeParse(memberId).success) throw new ApiError("not_found");
+  const parsed = updateMemberRoleSchema.safeParse(await readJson(c));
+  if (!parsed.success) throw new ApiError("invalid_request");
+
+  const [member] = await c
+    .get("db")
+    .select({
+      id: members.id,
+      email: persons.email,
+      displayName: members.displayName,
+      role: members.role,
+    })
+    .from(members)
+    .innerJoin(persons, eq(members.personId, persons.id))
+    .where(
+      and(
+        eq(members.id, memberId),
+        eq(members.familyId, membership.familyId),
+        eq(members.active, true),
+      ),
+    );
+  if (!member) throw new ApiError("not_found");
+
+  const role = parsed.data.role;
+  await c.get("db").transaction(async (tx) => {
+    const rows = await tx
+      .select({ id: members.id, role: members.role })
+      .from(members)
+      .where(and(eq(members.familyId, membership.familyId), eq(members.active, true)))
+      .for("update");
+    const target = rows.find((row) => row.id === member.id);
+    const owners = rows.filter((row) => row.role === "owner");
+    if (!target) throw new ApiError("not_found");
+    if (target.role === "owner" && role !== "owner" && owners.length <= 1) {
+      throw new ApiError("last_owner");
+    }
+    await tx.update(members).set({ role }).where(eq(members.id, member.id));
+  });
+
+  return c.json({ member: { ...member, role } } satisfies MemberResponse);
+});
+
 familyRoutes.get("/:familyId/budgets", async (c) => {
   const membership = await activeMembership(
     c.get("db"),
@@ -182,6 +342,13 @@ function familyView(membership: Membership, change: Partial<Family> = {}): Famil
     timeZone: membership.timeZone,
     ...change,
   };
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  if ("code" in error && error.code === "23505") return true;
+  if ("cause" in error) return isUniqueViolation(error.cause);
+  return false;
 }
 
 async function readJson(c: { req: { json: () => Promise<unknown> } }): Promise<unknown> {

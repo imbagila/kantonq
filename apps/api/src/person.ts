@@ -5,6 +5,7 @@ import { createMiddleware } from "hono/factory";
 import type { Env } from "./app.ts";
 import { normalizeEmail } from "./email.ts";
 import { ApiError } from "./errors.ts";
+import { acceptPendingInvites, hasPendingInvite } from "./invites.ts";
 
 const { persons, allowedEmails } = schema;
 
@@ -17,6 +18,7 @@ async function findPerson(db: Database, personId: string) {
 
 /**
  * Creates the person on their first accepted sign-in.
+ * A pending invite is enough to be accepted, and is turned into membership on this request.
  * Someone who already has a person record stays signed in; later tickets decide what happens
  * when an allowed email is removed after that.
  */
@@ -29,6 +31,7 @@ export const requireAllowedPerson = createMiddleware<Env>(async (c, next) => {
   const existing = await findPerson(db, personId);
 
   if (existing) {
+    await acceptPendingInvites(db, existing);
     c.set("person", existing);
     c.set("isSuperAdmin", superAdmin);
     await next();
@@ -41,12 +44,15 @@ export const requireAllowedPerson = createMiddleware<Env>(async (c, next) => {
       .from(allowedEmails)
       .where(eq(allowedEmails.email, normalized))
       .limit(1);
-    if (!allowedEmail) throw new ApiError("not_allowed_email");
+    if (!allowedEmail && !(await hasPendingInvite(db, normalized))) {
+      throw new ApiError("not_allowed_email");
+    }
   }
 
   await db.insert(persons).values({ id: personId, email }).onConflictDoNothing();
   const person = await findPerson(db, personId);
   if (!person) throw new Error("The signed-in person has no row after inserting it");
+  await acceptPendingInvites(db, person);
 
   c.set("person", person);
   c.set("isSuperAdmin", superAdmin);

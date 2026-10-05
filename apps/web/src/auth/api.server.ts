@@ -95,6 +95,7 @@ export async function apiFetch(
     ...(body === undefined ? {} : { body }),
   });
   if (!response.ok) return { ok: false, message: await readErrorMessage(response) };
+  if (response.status === 204) return { ok: true, body: null };
   try {
     return { ok: true, body: await response.json() };
   } catch {

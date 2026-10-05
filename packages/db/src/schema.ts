@@ -1,5 +1,6 @@
 import { defaultLanguage, languages } from "@kantonq/shared/language";
 import { defaultTimeZone } from "@kantonq/shared/time-zone";
+import { sql } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -20,6 +21,8 @@ export const allowedEmails = pgTable("allowed_emails", {
 });
 
 export const memberRole = pgEnum("member_role", ["owner", "editor", "viewer"]);
+
+export const inviteState = pgEnum("invite_state", ["pending", "accepted", "cancelled"]);
 
 /** A group of members who share one set of wallets, budgets and records. */
 export const families = pgTable("families", {
@@ -58,6 +61,29 @@ export const members = pgTable(
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex("members_family_person").on(table.familyId, table.personId)],
+);
+
+/** An owner's offer for a Google email to join a family. A pending invite also lets that email sign in. */
+export const invites = pgTable(
+  "invites",
+  {
+    id: uuid().primaryKey(),
+    familyId: uuid()
+      .notNull()
+      .references(() => families.id),
+    email: text().notNull(),
+    role: memberRole().notNull(),
+    invitedByMemberId: uuid()
+      .notNull()
+      .references(() => members.id),
+    state: inviteState().notNull().default("pending"),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("invites_pending_family_email")
+      .on(table.familyId, table.email)
+      .where(sql`${table.state} = 'pending'`),
+  ],
 );
 
 /** An expense category. Built-in budgets are created with the family and cannot be removed. */
